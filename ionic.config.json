@@ -1,0 +1,7 @@
+{
+  "name": "monteApp",
+  "integrations": {
+    "capacitor": {}
+  },
+  "type": "react-vite"
+}
