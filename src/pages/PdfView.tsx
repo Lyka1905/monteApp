@@ -51,7 +51,7 @@ const PdfView: React.FC = () => {
     </IonPage>
   );
 
-const googleViewerUrl = `${PDF_URL}/${pdf?.filename}`;
+const googleViewerUrl = `https://docs.google.com/viewer?url=${encodeURIComponent(`${PDF_URL}/${pdf?.filename}`)}&embedded=true`;
 
   return (
     <IonPage>
