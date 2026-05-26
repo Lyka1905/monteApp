@@ -9,7 +9,7 @@ import {
   micOutline, stopOutline, saveOutline, trashOutline, timeOutline,
 } from 'ionicons/icons';
 
-const API_BASE       = '/monteApp/Api_SongDetails';
+const API_BASE = 'https://itservicesph.com/IT383/MONTE/monte/index.php/Api_SongDetails';
 const API_SHEET      = 'https://itservicesph.com/IT383/MONTE/monte/index.php/Api_Musicsheet';
 const API_REC        = 'https://itservicesph.com/IT383/MONTE/monte/index.php/Api_Recordings';
 const RECORDINGS_URL = 'https://itservicesph.com/IT383/MONTE/monte/uploads/recordings';
