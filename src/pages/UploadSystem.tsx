@@ -9,7 +9,7 @@ import {
   pencilOutline, addOutline, musicalNotesOutline,
 } from 'ionicons/icons';
 
-const API_BASE = '/monteApp/Api_Musicsheet';
+const API_BASE = 'https://itservicesph.com/IT383/MONTE/monte/index.php/Api_Musicsheet';
 const getToken = () => localStorage.getItem('auth_token') ?? '';
 
 interface Category { id: number; name: string; }
