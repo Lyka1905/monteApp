@@ -90,12 +90,22 @@ const Recordings: React.FC = () => {
     }
   };
 
-  const handleDownload = (file: string) => {
-    const link    = document.createElement('a');
-    link.href     = `${FILES_BASE}/${file}`;
+ const handleDownload = async (file: string) => {
+  try {
+    const response = await fetch(`${FILES_BASE}/${file}`);
+    const blob = await response.blob();
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
     link.download = file;
+    document.body.appendChild(link);
     link.click();
-  };
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  } catch {
+    notify('Download failed.', 'danger');
+  }
+};
 
   const handleViewSong = (rec: Recording) => {
     if (rec.song_id) history.push(`/song-view/${rec.song_id}`);

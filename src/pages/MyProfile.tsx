@@ -9,7 +9,7 @@ import {
   pencilOutline, searchOutline, logOutOutline, chevronDownOutline,
 } from 'ionicons/icons';
 
-const API_BASE   = '/monteApp/Api_Profile';
+const API_BASE = 'https://itservicesph.com/IT383/MONTE/monte/index.php/Api_Profile';
 const AVATAR_URL = 'https://itservicesph.com/IT383/MONTE/monte/uploads/avatars';
 
 interface User {
@@ -171,7 +171,7 @@ const MyProfile: React.FC = () => {
       <IonContent style={{ '--background': '#f4f6fb' }}>
 
         {/* ── NAVBAR ── */}
-        <div style={{ background:'#111827', height:56, display:'flex', alignItems:'center', padding:'0 20px', position:'sticky', top:0, zIndex:200 }}>
+        <div style={{ background:'#111827', height:56, display:'flex', alignItems:'center', justifyContent:'space-between', padding:'0 20px', position:'sticky', top:0, zIndex:200 }}>
 
           {/* Left: hamburger */}
           <IonMenuButton style={{ color: '#fff', fontSize: 24 }} />

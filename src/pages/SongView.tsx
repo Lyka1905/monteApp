@@ -1,27 +1,23 @@
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import {
-  IonPage, IonContent, IonSpinner, IonToast, IonIcon, IonMenuButton,
+  IonPage, IonContent, IonSpinner, IonToast, IonIcon,
 } from '@ionic/react';
 import { useParams, useHistory } from 'react-router-dom';
 import {
-  musicalNotesOutline, searchOutline, chevronDownOutline,
-  personOutline, logOutOutline, gridOutline,
   micOutline, stopOutline, saveOutline, trashOutline, timeOutline,
 } from 'ionicons/icons';
+import Navbar from '../components/Navbar';
 
-const API_BASE = 'https://itservicesph.com/IT383/MONTE/monte/index.php/Api_SongDetails';
+const API_BASE       = 'https://itservicesph.com/IT383/MONTE/monte/index.php/Api_SongDetails';
 const API_SHEET      = 'https://itservicesph.com/IT383/MONTE/monte/index.php/Api_Musicsheet';
 const API_REC        = 'https://itservicesph.com/IT383/MONTE/monte/index.php/Api_Recordings';
 const RECORDINGS_URL = 'https://itservicesph.com/IT383/MONTE/monte/uploads/recordings';
-const AVATAR_URL     = 'https://itservicesph.com/IT383/MONTE/monte/uploads/avatars';
-const EXPORT_BASE    = 'https://itservicesph.com/IT383/MONTE/monte/index.php/songs/exportpdf';
 
-const stored    = JSON.parse(localStorage.getItem('user') ?? '{}');
-const USER_NAME = stored?.name   ?? 'User';
-const USER_ROLE = stored?.role   ?? '';
-const USER_AVT  = stored?.avatar ?? '';
-const USER_ID   = stored?.id     ?? 3;
-const IS_ADMIN  = USER_ROLE === 'admin';
+const stored   = JSON.parse(localStorage.getItem('user') ?? '{}');
+const USER_NAME= stored?.name   ?? 'User';
+const USER_ROLE= stored?.role   ?? '';
+const USER_ID  = stored?.id     ?? 3;
+const IS_ADMIN = USER_ROLE === 'admin';
 
 const VOICE_COLORS: Record<string, string> = {
   soprano: '#c0392b', alto: '#8e44ad', tenor: '#2980b9', bass: '#27ae60',
@@ -34,8 +30,8 @@ const LINE_TOP   = 28;
 const LINE_GAP   = 14;
 const MIDDLE_C_Y = LINE_TOP + 5 * LINE_GAP;
 const CANVAS_W   = 860;
-const SP: Record<string, number>   = { whole: 56, half: 48, quarter: 40, eighth: 34 };
-const REST: Record<string, string> = { whole: '𝄻', half: '𝄼', quarter: '𝄽', eighth: '𝄾' };
+const SP: Record<string, number>   = { whole:56, half:48, quarter:40, eighth:34 };
+const REST: Record<string, string> = { whole:'𝄻', half:'𝄼', quarter:'𝄽', eighth:'𝄾' };
 const PITCH: Record<string, number> = {
   C3:-49,D3:-42,E3:-35,F3:-28,G3:-21,A3:-14,B3:-7,
   C4:0,  D4:7,  E4:14, F4:21, G4:28, A4:35, B4:42,
@@ -49,24 +45,7 @@ interface Song {
   composer?: string; category_name?: string; lyrics?: string;
 }
 interface Recording { id: number; song_id: number; user_id: number; filename: string; created_at: string; }
-interface Sheet {
-  key_signature: string; time_signature: string;
-  tempo: number; notes_data: string;
-}
-
-const Avatar: React.FC<{ size?: number }> = ({ size = 34 }) => (
-  USER_AVT ? (
-    <img
-      src={`${AVATAR_URL}/${USER_AVT}`}
-      alt="avatar"
-      style={{ width: size, height: size, borderRadius: '50%', objectFit: 'cover', border: '2px solid rgba(255,255,255,0.3)' }}
-    />
-  ) : (
-    <div style={{ width: size, height: size, borderRadius: '50%', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700, fontSize: size * 0.4, color: '#fff' }}>
-      {USER_NAME[0].toUpperCase()}
-    </div>
-  )
-);
+interface Sheet { key_signature: string; time_signature: string; tempo: number; notes_data: string; }
 
 function drawCanvas(canvasId: string, voice: string, notes: NoteEntry[], keySig: string, timeSig: string, bg = '#fafafa', startIndex = 0): number {
   const cv = document.getElementById(canvasId) as HTMLCanvasElement | null;
@@ -141,8 +120,6 @@ const SongView: React.FC = () => {
   const [loading,    setLoading]    = useState(true);
   const [activeTab,  setActiveTab]  = useState<'lyrics'|'sheet'|'recordings'>('lyrics');
   const [toast,      setToast]      = useState({ show: false, msg: '', color: 'success' });
-  const [dropOpen,   setDropOpen]   = useState(false);
-  const [actionsOpen,setActionsOpen]= useState(false);
 
   const [sheet,     setSheet]     = useState<Sheet | null>(null);
   const [allNotes,  setAllNotes]  = useState<AllNotes>({ soprano:[], alto:[], tenor:[], bass:[] });
@@ -157,20 +134,8 @@ const SongView: React.FC = () => {
   const animRef      = useRef<number>(0);
   const blobRef      = useRef<Blob | null>(null);
 
-  const dropRef     = useRef<HTMLDivElement>(null);
-  const actionsRef  = useRef<HTMLDivElement>(null);
-
   const notify = (msg: string, color = 'success') =>
     setToast({ show: true, msg, color });
-
-  useEffect(() => {
-    const h = (e: MouseEvent) => {
-      if (dropRef.current    && !dropRef.current.contains(e.target as Node))    setDropOpen(false);
-      if (actionsRef.current && !actionsRef.current.contains(e.target as Node)) setActionsOpen(false);
-    };
-    document.addEventListener('mousedown', h);
-    return () => document.removeEventListener('mousedown', h);
-  }, []);
 
   useEffect(() => {
     (async () => {
@@ -299,10 +264,8 @@ const SongView: React.FC = () => {
     try {
       const res  = await fetch(`${API_REC}/delete/${recId}`, { method: 'DELETE' });
       const json = await res.json();
-      if (json.success) {
-        notify('Recording deleted!');
-        setRecordings(prev => prev.filter(r => r.id !== recId));
-      } else notify('Delete failed.', 'danger');
+      if (json.success) { notify('Recording deleted!'); setRecordings(prev => prev.filter(r => r.id !== recId)); }
+      else notify('Delete failed.', 'danger');
     } catch { notify('Network error.', 'danger'); }
   };
 
@@ -322,101 +285,27 @@ const SongView: React.FC = () => {
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" />
         <style>{`@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }`}</style>
 
-       {/* NAVBAR */}
-<div style={{ background:'#111827', height:56, display:'flex', alignItems:'center', padding:'0 20px', position:'sticky', top:0, zIndex:200 }}>
-
-  <IonMenuButton style={{ color: '#fff', fontSize: 24 }} />
-
-  {/* ← marginLeft:'auto' ang nag-push papunta sa RIGHT */}
-  <div style={{ display:'flex', alignItems:'center', gap:10, marginLeft:'auto' }}>
-    <div style={{ display:'flex', background:'#fff', borderRadius:8, overflow:'hidden' }}>
-      <input
-        placeholder="Search songs..."
-        style={{ border:'none', outline:'none', padding:'7px 14px', fontSize:14, width:200 }}
-      />
-      <button style={{ background:'#2563eb', border:'none', color:'#fff', padding:'0 13px', cursor:'pointer', display:'flex', alignItems:'center' }}>
-        <IonIcon icon={searchOutline} style={{ fontSize:15 }} />
-      </button>
-    </div>
-
-    {/* User Dropdown */}
-    <div ref={dropRef} style={{ position:'relative' }}>
-      <div onClick={() => setDropOpen(o => !o)} style={{ display:'flex', alignItems:'center', gap:8, cursor:'pointer' }}>
-        <Avatar />
-        <span style={{ color:'#fff', fontSize:14 }}>{USER_NAME}</span>
-        <IonIcon
-          icon={chevronDownOutline}
-          style={{ color:'#9ca3af', fontSize:14, transform:dropOpen?'rotate(180deg)':'rotate(0)', transition:'transform 0.2s' }}
-        />
-      </div>
-      <div style={{ position:'absolute', top:'calc(100% + 10px)', right:0, width:190, zIndex:500, background:'#1e293b', border:'1px solid rgba(255,255,255,0.08)', borderRadius:10, boxShadow:'0 8px 32px rgba(0,0,0,0.4)', overflow:'hidden', opacity:dropOpen?1:0, transform:dropOpen?'translateY(0) scale(1)':'translateY(-6px) scale(0.97)', pointerEvents:dropOpen?'auto':'none', transition:'opacity 0.18s, transform 0.18s' }}>
-        <div style={{ padding:'12px 14px', borderBottom:'1px solid rgba(255,255,255,0.07)', display:'flex', alignItems:'center', gap:10 }}>
-          <Avatar size={36} />
-          <div>
-            <div style={{ color:'#e2e8f0', fontWeight:600, fontSize:13 }}>{USER_NAME}</div>
-            {USER_ROLE && <div style={{ color:'#94a3b8', fontSize:11, textTransform:'uppercase' }}>{USER_ROLE}</div>}
-          </div>
-        </div>
-        <div
-          onClick={() => { setDropOpen(false); history.push('/my-profile'); }}
-          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
-          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-          style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', cursor:'pointer', color:'#cbd5e1', fontSize:13 }}
-        >
-          <IonIcon icon={personOutline} style={{ color:'#60a5fa', fontSize:16 }} /> View Profile
-        </div>
-        <div style={{ height:1, background:'rgba(255,255,255,0.06)' }} />
-        <div
-          onClick={() => { localStorage.clear(); window.location.href = '/login'; }}
-          onMouseEnter={e => (e.currentTarget.style.background = 'rgba(255,255,255,0.06)')}
-          onMouseLeave={e => (e.currentTarget.style.background = 'transparent')}
-          style={{ display:'flex', alignItems:'center', gap:10, padding:'11px 14px', cursor:'pointer', color:'#f87171', fontSize:13 }}
-        >
-          <IonIcon icon={logOutOutline} style={{ color:'#f87171', fontSize:16 }} /> Logout
-        </div>
-      </div>
-    </div>
-  </div>
-</div>
+        <Navbar />
 
         {loading ? (
           <div className="text-center py-5"><IonSpinner name="crescent" color="dark" /></div>
         ) : song ? (
-          <div className="container-fluid py-3 px-4">
+          <div className="container-fluid py-3 px-3">
 
             {/* Song Header */}
-            <div className="d-flex align-items-start justify-content-between mb-3">
+            <div className="d-flex align-items-start justify-content-between mb-3 gap-2">
               <div>
-                <h2 className="fw-bold mb-1">{song.title}</h2>
-                <div className="d-flex align-items-center gap-2 text-muted small">
+                <h2 className="fw-bold mb-1" style={{ fontSize: 18 }}>{song.title}</h2>
+                <div className="d-flex flex-wrap align-items-center gap-2 text-muted" style={{ fontSize: 13 }}>
                   <span>👤 {song.author || '—'}</span>
                   <span>|</span>
                   <span>🎵 {song.composer || '—'}</span>
-                  <span>|</span>
                   <span className="badge bg-dark">{song.category_name || '—'}</span>
                 </div>
               </div>
-              <div className="d-flex gap-2">
-                <button onClick={() => history.goBack()} className="btn btn-outline-secondary btn-sm">← Back</button>
-                <div ref={actionsRef} style={{ position:'relative' }}>
-                  
-                  {actionsOpen && (
-                    <div style={{ position:'absolute', top:'calc(100% + 6px)', right:0, background:'#fff', borderRadius:10, boxShadow:'0 8px 24px rgba(0,0,0,0.18)', minWidth:200, zIndex:999, overflow:'hidden' }}>
-                      
-                      
-                      {IS_ADMIN && (
-                        <>
-                          <div style={{ height:1, background:'#e5e7eb' }} />
-                          <div onClick={() => { setActionsOpen(false); history.push(`/sheet-builder/${song.id}`); }} style={actionItemStyle} onMouseEnter={e=>(e.currentTarget.style.background='#f8f9fa')} onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>🎵 Edit Music Sheet</div>
-                          <div onClick={() => { setActionsOpen(false); history.push(`/edit-song/${song.id}`); }} style={actionItemStyle} onMouseEnter={e=>(e.currentTarget.style.background='#f8f9fa')} onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>✏️ Edit Song</div>
-                          <div style={{ height:1, background:'#e5e7eb' }} />
-                          <div onClick={() => { setActionsOpen(false); handleDeleteSong(); }} style={{ ...actionItemStyle, color:'#dc3545' }} onMouseEnter={e=>(e.currentTarget.style.background='#fff5f5')} onMouseLeave={e=>(e.currentTarget.style.background='transparent')}>🗑️ Delete Song</div>
-                        </>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
+             <div className="d-flex gap-2 flex-wrap">
+  <button onClick={() => history.goBack()} className="btn btn-outline-secondary btn-sm">← Back</button>
+</div>
             </div>
 
             {/* Tabs */}
@@ -426,8 +315,9 @@ const SongView: React.FC = () => {
                   <button
                     onClick={() => setActiveTab(tab)}
                     className={`nav-link ${activeTab === tab ? 'active fw-bold' : 'text-muted'}`}
+                    style={{ fontSize: 13 }}
                   >
-                    {tab === 'lyrics' ? '≡ Lyrics' : tab === 'sheet' ? '🎵 Music Sheet' : '🎤 Recordings'}
+                    {tab === 'lyrics' ? '≡ Lyrics' : tab === 'sheet' ? '🎵 Sheet' : '🎤 Recordings'}
                     {tab === 'recordings' && recordings.length > 0 && (
                       <span className="badge bg-dark ms-1">{recordings.length}</span>
                     )}
@@ -437,11 +327,11 @@ const SongView: React.FC = () => {
             </ul>
 
             {/* Tab Content */}
-            <div className="card border-0 shadow-sm p-4" style={{ borderRadius:10 }}>
+            <div className="card border-0 shadow-sm p-3" style={{ borderRadius: 10 }}>
 
               {/* Lyrics */}
               {activeTab === 'lyrics' && (
-                <div style={{ whiteSpace:'pre-wrap', lineHeight:2, fontSize:'0.95rem', color:'#333' }}>
+                <div style={{ whiteSpace: 'pre-wrap', lineHeight: 2, fontSize: '0.95rem', color: '#333' }}>
                   {song.lyrics || 'No lyrics available.'}
                 </div>
               )}
@@ -453,8 +343,8 @@ const SongView: React.FC = () => {
                     <div className="text-center py-4"><IonSpinner name="crescent" color="dark" /></div>
                   ) : sheet ? (
                     <div>
-                      <div className="d-flex align-items-center justify-content-between mb-3">
-                        <div className="d-flex gap-3 text-muted small">
+                      <div className="d-flex align-items-center justify-content-between mb-3 flex-wrap gap-2">
+                        <div className="d-flex gap-3 text-muted" style={{ fontSize: 13 }}>
                           <span>🔑 Key: <strong>{sheet.key_signature}</strong></span>
                           <span>⏱ Time: <strong>{sheet.time_signature}</strong></span>
                           <span>🎵 Tempo: <strong>{sheet.tempo} BPM</strong></span>
@@ -464,16 +354,16 @@ const SongView: React.FC = () => {
                         )}
                       </div>
                       {Array.from({ length: totalSheets }, (_, sheetIdx) => (
-                        <div key={sheetIdx} style={{ background:'#fff', border:'1px solid #e5e7eb', borderRadius:8, padding:'20px 16px', marginBottom:20 }}>
-                          <div style={{ display:'flex', alignItems:'center', gap:8, marginBottom:12 }}>
-                            <span style={{ background:'#111', color:'#fff', borderRadius:6, padding:'2px 10px', fontSize:12, fontWeight:700 }}>Sheet {sheetIdx + 1}</span>
-                            {sheetIdx === 0 && <span style={{ fontSize:11, color:'#aaa' }}>Key: {sheet.key_signature} | Time: {sheet.time_signature} | Tempo: {sheet.tempo} BPM</span>}
+                        <div key={sheetIdx} style={{ background: '#fff', border: '1px solid #e5e7eb', borderRadius: 8, padding: '16px', marginBottom: 16 }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 10 }}>
+                            <span style={{ background: '#111', color: '#fff', borderRadius: 6, padding: '2px 10px', fontSize: 12, fontWeight: 700 }}>Sheet {sheetIdx + 1}</span>
+                            {sheetIdx === 0 && <span style={{ fontSize: 11, color: '#aaa' }}>Key: {sheet.key_signature} | Time: {sheet.time_signature} | Tempo: {sheet.tempo} BPM</span>}
                           </div>
                           {VOICES.map(v => (
-                            <div key={v} style={{ display:'flex', alignItems:'center', gap:8, marginBottom:4 }}>
-                              <span style={{ color:VOICE_COLORS[v], minWidth:65, fontSize:'0.8rem', fontWeight:600, textAlign:'right' }}>{VOICE_LABELS[v]}</span>
-                              <div style={{ flex:1, overflowX:'auto', background:'#fafafa', border:'1px solid #eee', borderRadius:4 }}>
-                                <canvas id={`sheet_${v}_${sheetIdx}`} width={CANVAS_W} height={130} style={{ background:'#fafafa', display:'block' }} />
+                            <div key={v} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                              <span style={{ color: VOICE_COLORS[v], minWidth: 60, fontSize: '0.8rem', fontWeight: 600, textAlign: 'right' }}>{VOICE_LABELS[v]}</span>
+                              <div style={{ flex: 1, overflowX: 'auto', background: '#fafafa', border: '1px solid #eee', borderRadius: 4 }}>
+                                <canvas id={`sheet_${v}_${sheetIdx}`} width={CANVAS_W} height={130} style={{ background: '#fafafa', display: 'block' }} />
                               </div>
                             </div>
                           ))}
@@ -482,7 +372,7 @@ const SongView: React.FC = () => {
                     </div>
                   ) : (
                     <div className="text-center py-4 text-muted">
-                      <p>No music sheet available yet.</p>
+                      <p style={{ fontSize: 14 }}>No music sheet available yet.</p>
                       {IS_ADMIN && (
                         <button onClick={() => history.push(`/sheet-builder/${song.id}`)} className="btn btn-dark btn-sm">✏️ Create Music Sheet</button>
                       )}
@@ -494,85 +384,70 @@ const SongView: React.FC = () => {
               {/* Recordings */}
               {activeTab === 'recordings' && (
                 <div>
-                  <div style={{ marginBottom:28 }}>
-                    <h6 style={{ fontWeight:700, fontSize:15, marginBottom:6, display:'flex', alignItems:'center', gap:6 }}>
+                  <div style={{ marginBottom: 24 }}>
+                    <h6 style={{ fontWeight: 700, fontSize: 14, marginBottom: 6, display: 'flex', alignItems: 'center', gap: 6 }}>
                       <IonIcon icon={micOutline} /> Record Your Voice
                     </h6>
 
                     {isRecording && (
-                      <div style={{ display:'flex', alignItems:'center', gap:6, color:'#dc3545', fontSize:13, marginBottom:8 }}>
-                        <span style={{ width:10, height:10, borderRadius:'50%', background:'#dc3545', display:'inline-block', animation:'pulse 1s infinite' }} />
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 6, color: '#dc3545', fontSize: 13, marginBottom: 8 }}>
+                        <span style={{ width: 10, height: 10, borderRadius: '50%', background: '#dc3545', display: 'inline-block', animation: 'pulse 1s infinite' }} />
                         Recording...
                       </div>
                     )}
                     {isStopped && !isRecording && (
-                      <p style={{ color:'#6c757d', fontSize:13, marginBottom:8 }}>
-                        Recording stopped. Click <strong>Save</strong> to save.
-                      </p>
+                      <p style={{ color: '#6c757d', fontSize: 13, marginBottom: 8 }}>Recording stopped. Click <strong>Save</strong> to save.</p>
                     )}
                     {!isRecording && !isStopped && (
-                      <p style={{ color:'#6c757d', fontSize:13, marginBottom:8 }}>
-                        Press <strong>Start</strong> to begin recording.
-                      </p>
+                      <p style={{ color: '#6c757d', fontSize: 13, marginBottom: 8 }}>Press <strong>Start</strong> to begin recording.</p>
                     )}
 
-                    <canvas
-                      ref={canvasRecRef}
-                      width={600} height={120}
-                      style={{ width:'100%', height:120, background:'#0f172a', borderRadius:8, display:'block', marginBottom:12 }}
-                    />
+                    <canvas ref={canvasRecRef} width={600} height={100} style={{ width: '100%', height: 100, background: '#0f172a', borderRadius: 8, display: 'block', marginBottom: 10 }} />
 
-                    <div style={{ display:'flex', gap:8 }}>
-                      <button onClick={startRecording} disabled={isRecording}
-                        style={{ background:isRecording?'#aaa':'#dc3545', color:'#fff', border:'none', borderRadius:6, padding:'8px 16px', fontWeight:600, fontSize:13, display:'flex', alignItems:'center', gap:6, cursor:isRecording?'not-allowed':'pointer' }}>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <button onClick={startRecording} disabled={isRecording} style={{ background: isRecording ? '#aaa' : '#dc3545', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 14px', fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, cursor: isRecording ? 'not-allowed' : 'pointer' }}>
                         <IonIcon icon={micOutline} /> Start
                       </button>
-                      <button onClick={stopRecording} disabled={!isRecording}
-                        style={{ background:!isRecording?'#aaa':'#495057', color:'#fff', border:'none', borderRadius:6, padding:'8px 16px', fontWeight:600, fontSize:13, display:'flex', alignItems:'center', gap:6, cursor:!isRecording?'not-allowed':'pointer' }}>
+                      <button onClick={stopRecording} disabled={!isRecording} style={{ background: !isRecording ? '#aaa' : '#495057', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 14px', fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, cursor: !isRecording ? 'not-allowed' : 'pointer' }}>
                         <IonIcon icon={stopOutline} /> Stop
                       </button>
-                      <button onClick={saveRecording} disabled={!isStopped || isSaving}
-                        style={{ background:(!isStopped||isSaving)?'#aaa':'#198754', color:'#fff', border:'none', borderRadius:6, padding:'8px 16px', fontWeight:600, fontSize:13, display:'flex', alignItems:'center', gap:6, cursor:(!isStopped||isSaving)?'not-allowed':'pointer' }}>
+                      <button onClick={saveRecording} disabled={!isStopped || isSaving} style={{ background: (!isStopped || isSaving) ? '#aaa' : '#198754', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 14px', fontWeight: 600, fontSize: 13, display: 'flex', alignItems: 'center', gap: 6, cursor: (!isStopped || isSaving) ? 'not-allowed' : 'pointer' }}>
                         <IonIcon icon={saveOutline} /> {isSaving ? 'Saving...' : 'Save'}
                       </button>
                     </div>
                   </div>
 
                   <div>
-                    <h6 style={{ fontWeight:700, fontSize:15, marginBottom:12, display:'flex', alignItems:'center', gap:6 }}>
+                    <h6 style={{ fontWeight: 700, fontSize: 14, marginBottom: 10, display: 'flex', alignItems: 'center', gap: 6 }}>
                       <IonIcon icon={timeOutline} /> Past Recordings
                     </h6>
 
                     {recordings.length === 0 ? (
-                      <div style={{ textAlign:'center', padding:'40px 0', color:'#aaa' }}>
-                        <div style={{ fontSize:48, marginBottom:8 }}>🎤</div>
-                        <p>No recordings yet.</p>
+                      <div style={{ textAlign: 'center', padding: '30px 0', color: '#aaa' }}>
+                        <div style={{ fontSize: 40, marginBottom: 8 }}>🎤</div>
+                        <p style={{ fontSize: 14 }}>No recordings yet.</p>
                       </div>
                     ) : (
-                      <div style={{ display:'flex', flexDirection:'column', gap:12 }}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: 10 }}>
                         {recordings.map(rec => (
-                          <div key={rec.id} style={{ border:'1px solid #e5e7eb', borderRadius:10, padding:'14px 16px', background:'#fff', boxShadow:'0 1px 4px rgba(0,0,0,0.06)' }}>
-                            <div style={{ display:'flex', alignItems:'center', gap:12, marginBottom:10 }}>
-                              <div style={{ width:36, height:36, borderRadius:'50%', background:'linear-gradient(135deg,#6366f1,#8b5cf6)', display:'flex', alignItems:'center', justifyContent:'center', color:'#fff', fontWeight:700, fontSize:14, flexShrink:0 }}>
+                          <div key={rec.id} style={{ border: '1px solid #e5e7eb', borderRadius: 10, padding: '12px', background: '#fff', boxShadow: '0 1px 4px rgba(0,0,0,0.06)' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 8 }}>
+                              <div style={{ width: 32, height: 32, borderRadius: '50%', background: 'linear-gradient(135deg,#6366f1,#8b5cf6)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: 13, flexShrink: 0 }}>
                                 {USER_NAME[0].toUpperCase()}
                               </div>
                               <div>
-                                <div style={{ fontWeight:600, fontSize:14, color:'#212529' }}>{USER_NAME}</div>
-                                <div style={{ fontSize:12, color:'#6c757d', display:'flex', alignItems:'center', gap:4 }}>
-                                  <IonIcon icon={timeOutline} style={{ fontSize:12 }} /> {rec.created_at}
+                                <div style={{ fontWeight: 600, fontSize: 13 }}>{USER_NAME}</div>
+                                <div style={{ fontSize: 12, color: '#6c757d', display: 'flex', alignItems: 'center', gap: 4 }}>
+                                  <IonIcon icon={timeOutline} style={{ fontSize: 12 }} /> {rec.created_at}
                                 </div>
                               </div>
                             </div>
-                           <audio 
-  controls 
-  style={{ width:'100%', height:36, marginBottom:10 }}
-  src={`${RECORDINGS_URL}/${rec.filename}`}
->
-  Your browser does not support audio.
-</audio>
+                            <audio controls style={{ width: '100%', height: 36, marginBottom: 8, display: 'block' }} src={`${RECORDINGS_URL}/${rec.filename}`}>
+                              Your browser does not support audio.
+                            </audio>
                             <button
                               onClick={() => handleDeleteRecording(rec.id)}
-                              style={{ background:'#fff', color:'#dc3545', border:'1px solid #dc3545', borderRadius:6, padding:'6px 14px', fontSize:13, fontWeight:600, display:'flex', alignItems:'center', gap:6, cursor:'pointer' }}
+                              style={{ background: '#fff', color: '#dc3545', border: '1px solid #dc3545', borderRadius: 6, padding: '6px 12px', fontSize: 12, fontWeight: 600, display: 'flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
                             >
                               <IonIcon icon={trashOutline} /> Delete
                             </button>
@@ -583,7 +458,6 @@ const SongView: React.FC = () => {
                   </div>
                 </div>
               )}
-
             </div>
           </div>
         ) : (
@@ -592,17 +466,11 @@ const SongView: React.FC = () => {
 
         <IonToast
           isOpen={toast.show} message={toast.msg} color={toast.color as any}
-          duration={2500} onDidDismiss={() => setToast(t => ({ ...t, show:false }))} position="bottom"
+          duration={2500} onDidDismiss={() => setToast(t => ({ ...t, show: false }))} position="bottom"
         />
       </IonContent>
     </IonPage>
   );
-};
-
-const actionItemStyle: React.CSSProperties = {
-  display:'flex', alignItems:'center', gap:10,
-  padding:'11px 16px', cursor:'pointer',
-  fontSize:14, color:'#212529', background:'transparent',
 };
 
 export default SongView;

@@ -1,13 +1,14 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import {
-  IonContent, IonHeader, IonPage, IonTitle, IonToolbar,
-  IonButtons, IonMenuButton, IonIcon, IonSpinner, IonToast
+  IonContent, IonPage,
+  IonIcon, IonSpinner, IonToast
 } from '@ionic/react';
 import { useHistory } from 'react-router-dom';
 import {
   searchOutline, checkmarkOutline, closeOutline,
   pencilOutline, addOutline, musicalNotesOutline,
 } from 'ionicons/icons';
+import Navbar from '../components/Navbar';
 
 const API_BASE = 'https://itservicesph.com/IT383/MONTE/monte/index.php/Api_Musicsheet';
 const getToken = () => localStorage.getItem('auth_token') ?? '';
@@ -48,20 +49,15 @@ const UploadSystem: React.FC = () => {
     finally  { setLoading(false); }
   }, [search, category]);
 
- useEffect(() => { fetchSongs(); }, [fetchSongs]);
+  useEffect(() => { fetchSongs(); }, [fetchSongs]);
 
   return (
     <IonPage>
-      <IonHeader className="ion-no-border">
-        <IonToolbar style={{ '--background': '#1a1a2e', '--color': 'white' }}>
-          <IonButtons slot="start"><IonMenuButton /></IonButtons>
-          <IonTitle className="fw-bold">Music Sheet Builder</IonTitle>
-        </IonToolbar>
-      </IonHeader>
-
       <IonContent style={{ '--background': '#f4f6fb' }}>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap/5.3.0/css/bootstrap.min.css" />
+
+        <Navbar searchPlaceholder="Search songs..." onSearch={q => setSearch(q)} />
 
         <div className="container-fluid py-4 px-3">
 
@@ -117,14 +113,12 @@ const UploadSystem: React.FC = () => {
             </div>
           </div>
 
-          {/* Loading */}
           {loading && (
             <div className="text-center py-5">
               <IonSpinner name="crescent" color="dark" />
             </div>
           )}
 
-          {/* Table */}
           {!loading && (
             <div className="card border-0 shadow-sm" style={{ borderRadius: 10, overflow: 'hidden' }}>
               <div className="card-header bg-dark text-white py-3 border-0 d-flex align-items-center gap-2">
@@ -164,22 +158,22 @@ const UploadSystem: React.FC = () => {
                           </td>
                           <td>
                             {song.has_sheet ? (
-                              <span className="badge bg-success-subtle text-success border border-success px-2 py-1 fw-normal">
-                                <IonIcon icon={checkmarkOutline} className="me-1" /> Has Sheet
+                              <span style={{ background: '#d1fae5', color: '#065f46', border: '1px solid #6ee7b7', borderRadius: 6, padding: '3px 10px', fontSize: 12, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                <IonIcon icon={checkmarkOutline} /> Has Sheet
                               </span>
                             ) : (
-                              <span className="badge bg-secondary-subtle text-secondary border border-secondary px-2 py-1 fw-normal">
-                                <IonIcon icon={closeOutline} className="me-1" /> No Sheet
+                              <span style={{ background: '#f3f4f6', color: '#6b7280', border: '1px solid #d1d5db', borderRadius: 6, padding: '3px 10px', fontSize: 12, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 4 }}>
+                                <IonIcon icon={closeOutline} /> No Sheet
                               </span>
                             )}
                           </td>
                           <td>
                             <button
                               onClick={() => history.push(`/sheet-builder/${song.id}`)}
-                              className="btn btn-dark btn-sm px-3 d-flex align-items-center gap-1 shadow-sm"
+                              style={{ background: '#212529', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontSize: 13, fontWeight: 600, display: 'inline-flex', alignItems: 'center', gap: 6, cursor: 'pointer' }}
                             >
                               <IonIcon icon={song.has_sheet ? pencilOutline : addOutline} />
-                              {song.has_sheet ? 'Edit Sheet' : 'Create Sheet'}
+                              {song.has_sheet ? 'Edit Sheet' : '+ Create Sheet'}
                             </button>
                           </td>
                         </tr>
@@ -191,13 +185,13 @@ const UploadSystem: React.FC = () => {
             </div>
           )}
         </div>
-      </IonContent>
 
-      <IonToast
-        isOpen={toast.show} message={toast.msg} color={toast.color as any}
-        duration={2500} onDidDismiss={() => setToast(t => ({ ...t, show: false }))}
-        position="bottom"
-      />
+        <IonToast
+          isOpen={toast.show} message={toast.msg} color={toast.color as any}
+          duration={2500} onDidDismiss={() => setToast(t => ({ ...t, show: false }))}
+          position="bottom"
+        />
+      </IonContent>
     </IonPage>
   );
 };
